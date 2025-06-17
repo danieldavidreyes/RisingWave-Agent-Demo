@@ -1,12 +1,16 @@
-"""Agent implementation with Claude API and tools."""
+"""Agent implementation with Claude API and MCP tools."""
 
 import asyncio
 import os
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 from anthropic import Anthropic
+from .utils.connections import setup_mcp_connections
+from .utils.history_util import MessageHistory
+
+from fastmcp import FastMCP
 
 @dataclass
 class ModelConfig:
@@ -19,13 +23,12 @@ class ModelConfig:
 
 
 class Agent:
-    """Claude-powered agent with tool use capabilities."""
+    """Claude-powered agent with MCP tool capabilities."""
 
     def __init__(
         self,
         name: str,
         system: str,
-        tools: list[Tool] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         config: ModelConfig | None = None,
         verbose: bool = False,
@@ -37,7 +40,6 @@ class Agent:
         Args:
             name: Agent identifier for logging
             system: System prompt for the agent
-            tools: List of tools available to the agent
             mcp_servers: MCP server configurations
             config: Model configuration with defaults
             verbose: Enable detailed logging
@@ -48,7 +50,6 @@ class Agent:
         self.name = name
         self.system = system
         self.verbose = verbose
-        self.tools = list(tools or [])
         self.config = config or ModelConfig()
         self.mcp_servers = mcp_servers or []
         self.message_params = message_params or {}
@@ -65,33 +66,27 @@ class Agent:
         if self.verbose:
             print(f"\n[{self.name}] Agent initialized")
 
-    def _prepare_message_params(self) -> dict[str, Any]:
-        """Prepare parameters for client.messages.create() call.
-        
-        Returns a dict with base parameters from config, with any
-        message_params overriding conflicting keys.
-        """
+    def _prepare_message_params(self, tools: list[dict[str, Any]]) -> dict[str, Any]:
+        """Prepare parameters for client.messages.create() call."""
         return {
             "model": self.config.model,
             "max_tokens": self.config.max_tokens,
             "temperature": self.config.temperature,
             "system": self.system,
             "messages": self.history.format_for_api(),
-            "tools": [tool.to_dict() for tool in self.tools],
+            "tools": tools,
             **self.message_params,
         }
 
-    async def _agent_loop(self, user_input: str) -> list[dict[str, Any]]:
+    async def _agent_loop(self, user_input: str, tools: list[dict[str, Any]], tool_functions: dict[str, Callable]) -> list[dict[str, Any]]:
         """Process user input and handle tool calls in a loop"""
         if self.verbose:
             print(f"\n[{self.name}] Received: {user_input}")
         await self.history.add_message("user", user_input, None)
 
-        tool_dict = {tool.name: tool for tool in self.tools}
-
         while True:
             self.history.truncate()
-            params = self._prepare_message_params()
+            params = self._prepare_message_params(tools)
 
             response = self.client.messages.create(**params)
             tool_calls = [
@@ -116,10 +111,31 @@ class Agent:
             )
 
             if tool_calls:
-                tool_results = await execute_tools(
-                    tool_calls,
-                    tool_dict,
-                )
+                tool_results = []
+                for call in tool_calls:
+                    try:
+                        if call.name in tool_functions:
+                            result = await tool_functions[call.name](**call.input)
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": call.id,
+                                "content": str(result)
+                            })
+                        else:
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": call.id,
+                                "content": f"Tool '{call.name}' not found",
+                                "is_error": True
+                            })
+                    except Exception as e:
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": call.id,
+                            "content": f"Error executing tool: {str(e)}",
+                            "is_error": True
+                        })
+                
                 if self.verbose:
                     for block in tool_results:
                         print(
@@ -133,16 +149,14 @@ class Agent:
     async def run_async(self, user_input: str) -> list[dict[str, Any]]:
         """Run agent with MCP tools asynchronously."""
         async with AsyncExitStack() as stack:
-            original_tools = list(self.tools)
-
             try:
-                mcp_tools = await setup_mcp_connections(
+                mcp_tools, tool_functions = await setup_mcp_connections(
                     self.mcp_servers, stack
                 )
-                self.tools.extend(mcp_tools)
-                return await self._agent_loop(user_input)
-            finally:
-                self.tools = original_tools
+                return await self._agent_loop(user_input, mcp_tools, tool_functions)
+            except Exception as e:
+                print(f"Error running agent: {e}")
+                return None
 
     def run(self, user_input: str) -> list[dict[str, Any]]:
         """Run agent synchronously"""

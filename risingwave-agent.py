@@ -27,7 +27,7 @@ agent = Agent(
     14. Use markdown tables for better readability
     15. Skip intermediate steps and show only the final result
     16. Keep tool calls visible but minimize other debug output""",
-    tools=[],  # Local tools
+    
     mcp_servers=[
         {
             "type": "stdio",

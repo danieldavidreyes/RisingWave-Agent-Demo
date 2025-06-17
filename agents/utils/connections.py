@@ -2,13 +2,11 @@
 
 from abc import ABC, abstractmethod
 from contextlib import AsyncExitStack
-from typing import Any
+from typing import Any, Callable, Tuple
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
-
-from ..tools.mcp_tool import MCPTool
 
 
 class MCPConnection(ABC):
@@ -117,12 +115,13 @@ def create_mcp_connection(config: dict[str, Any]) -> MCPConnection:
 async def setup_mcp_connections(
     mcp_servers: list[dict[str, Any]] | None,
     stack: AsyncExitStack,
-) -> list[MCPTool]:
+) -> Tuple[list[dict[str, Any]], dict[str, Callable]]:
     """Set up MCP server connections and create tool interfaces."""
     if not mcp_servers:
-        return []
+        return [], {}
 
     mcp_tools = []
+    tool_functions = {}
 
     for config in mcp_servers:
         try:
@@ -131,15 +130,21 @@ async def setup_mcp_connections(
             tool_definitions = await connection.list_tools()
 
             for tool_info in tool_definitions:
-                mcp_tools.append(
-                    MCPTool(
-                        name=tool_info.name,
-                        description=tool_info.description
-                        or f"MCP tool: {tool_info.name}",
-                        input_schema=tool_info.inputSchema,
-                        connection=connection,
-                    )
-                )
+                # Add tool definition to tools list
+                mcp_tools.append({
+                    "name": tool_info.name,
+                    "description": tool_info.description or f"MCP tool: {tool_info.name}",
+                    "input_schema": tool_info.inputSchema,
+                })
+                
+                # Create async wrapper for the tool function
+                async def create_tool_wrapper(tool_name: str):
+                    async def wrapper(**kwargs):
+                        return await connection.call_tool(tool_name, kwargs)
+                    return wrapper
+                
+                # Add tool function to dictionary
+                tool_functions[tool_info.name] = await create_tool_wrapper(tool_info.name)
 
         except Exception as e:
             print(f"Error setting up MCP server {config}: {e}")
@@ -147,4 +152,4 @@ async def setup_mcp_connections(
     print(
         f"Loaded {len(mcp_tools)} MCP tools from {len(mcp_servers)} servers."
     )
-    return mcp_tools
+    return mcp_tools, tool_functions
