@@ -5,6 +5,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+risingwave_env = {
+    "RISINGWAVE_HOST": os.getenv("RISINGWAVE_HOST", "0.0.0.0"),
+    "RISINGWAVE_PORT": os.getenv("RISINGWAVE_PORT", "4566"),
+    "RISINGWAVE_USER": os.getenv("RISINGWAVE_USER", "root"),
+    "RISINGWAVE_PASSWORD": os.getenv("RISINGWAVE_PASSWORD", "root"),
+    "RISINGWAVE_SSLMODE": os.getenv("RISINGWAVE_SSLMODE", "disable"),
+    "RISINGWAVE_TIMEOUT": os.getenv("RISINGWAVE_TIMEOUT", "30")
+}
+
 agent = Agent(
     name="RisingWave Agent",
     system="""You are an assistant to a Rising Wave MCP. Follow these rules:
@@ -32,7 +42,8 @@ agent = Agent(
         {
             "type": "stdio",
             "command": "python",
-            "args": ["server/server.py"],
+            "args": ["risingwave-mcp/src/main.py"],
+            "env": risingwave_env  # Pass environment variables to MCP server
         },
     ],
     verbose=False  # Disable verbose mode to reduce noise
