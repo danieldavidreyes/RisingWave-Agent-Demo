@@ -5,3 +5,5 @@ ENV/
 secrets/
 .env
 .vscode/
+.agents/__pycache__
+.server/__pycache__
