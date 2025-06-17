@@ -1,1 +1,6 @@
-/.env
+venv/
+.env
+ENV/
+.DS_Store
+secrets/
+.env
