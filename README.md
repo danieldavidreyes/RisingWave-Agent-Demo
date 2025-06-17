@@ -18,8 +18,7 @@ cd risingwave-agent-demo
 
 2. Clone the RisingWave MCP server:
 ```bash
-git clone https://github.com/risingwavelabs/risingwave-mcp.git
-cp -r risingwave-mcp/src/* server/
+cd RisingWave-Agent-Demo && git clone https://github.com/risingwavelabs/risingwave-mcp.git
 ```
 
 3. Install dependencies:
