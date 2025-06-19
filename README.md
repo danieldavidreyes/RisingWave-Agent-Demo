@@ -144,7 +144,3 @@ If you encounter connection issues:
 2. Check that RisingWave is running and accessible
 3. Ensure your Anthropic API key is valid
 4. Check the logs for specific error messages
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
