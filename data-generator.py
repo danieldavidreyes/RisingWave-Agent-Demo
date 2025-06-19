@@ -1,6 +1,6 @@
 import psycopg2
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 # RisingWave connection parameters
@@ -15,53 +15,87 @@ conn_params = {
 conn = psycopg2.connect(**conn_params)
 cursor = conn.cursor()
 
-asset_ids = [1, 2, 3, 4, 5]
-traders = list(range(100, 200))
+countries = ['Singapore', 'Malaysia', 'USA', 'Philippines', 'Indonesia']
+transaction_types = ['purchase', 'refund', 'transfer']
+merchants = ['Adidas', 'Starbucks', 'Apple Store', 'Nike', 'GrabFood', 'Shopee']
+locations = ['Singapore', 'Kuala Lumpur', 'Jakarta', 'Bangkok', 'Manila']
+device_types = ['mobile', 'desktop', 'tablet']
 
-trade_id_counter = 10000  # manual incremental trade_id
+# ID counters
+user_id_counter = 1000
+transaction_id_counter = 50000
+risk_id_counter = 100000
+
+# Active users list
+user_ids = []
+
+def random_date(start, end):
+    delta = end - start
+    int_delta = int(delta.total_seconds())
+    random_second = random.randint(0, int_delta)
+    return start + timedelta(seconds=random_second)
 
 try:
     while True:
-        # Insert trade data for each asset
-        for asset_id in asset_ids:
-            trade_id = trade_id_counter
-            trade_id_counter += 1
-
-            timestamp = datetime.now()
-            price = round(random.uniform(50, 150), 2)
-            volume = random.randint(10, 1000)
-            buyer_id = random.choice(traders)
-            seller_id = random.choice([t for t in traders if t != buyer_id])
+        # 20% chance to create a new user
+        if random.random() < 0.2:
+            signup_date = random_date(datetime(2022, 1, 1), datetime.now())
+            email = f"user{user_id_counter}@example.com"
+            age = random.randint(18, 65)
+            country = random.choice(countries)
 
             cursor.execute(
                 """
-                INSERT INTO trade_data (trade_id, asset_id, timestamp, price, volume, buyer_id, seller_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """,
-                (trade_id, asset_id, timestamp, price, volume, buyer_id, seller_id)
-            )
-            conn.commit()
-            time.sleep(0.2)  # Sleep for 200ms between each trade insertion
-
-        # Insert market data for each asset
-        for asset_id in asset_ids:
-            timestamp = datetime.now()
-            bid_price = round(random.uniform(50, 149), 2)
-            ask_price = round(bid_price + random.uniform(0.5, 2.5), 2)
-            price = round((bid_price + ask_price) / 2, 2)
-            rolling_volume = random.randint(1000, 10000)
-
-            cursor.execute(
-                """
-                INSERT INTO market_data (asset_id, timestamp, bid_price, ask_price, price, rolling_volume)
+                INSERT INTO users (user_id, full_name, signup_date, email, age, country)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (asset_id, timestamp, bid_price, ask_price, price, rolling_volume)
+                (user_id_counter, f"user{user_id_counter}", signup_date, email, age, country)
             )
-            conn.commit()
-            time.sleep(1)  # Sleep for 200ms between each market data insertion
+            user_ids.append(user_id_counter)
+            print(f"Inserted user {user_id_counter}")
+            user_id_counter += 1
 
-        time.sleep(1)  # Additional sleep at the end of each full cycle
+        if not user_ids:
+            time.sleep(1)
+            continue
+
+        # Insert transaction for random user
+        user_id = random.choice(user_ids)
+        transaction_id = transaction_id_counter
+        transaction_id_counter += 1
+
+        amount = round(random.uniform(5, 5000), 2)
+        transaction_type = random.choice(transaction_types)
+        merchant_name = random.choice(merchants)
+        device_type = random.choice(device_types)
+        location = random.choice(locations)
+        timestamp = datetime.now()
+
+        cursor.execute(
+            """
+            INSERT INTO transactions (transaction_id, user_id, amount, transaction_type, merchant_name, device_type, location, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (transaction_id, user_id, amount, transaction_type, merchant_name, device_type, location, timestamp)
+        )
+        print(f"Inserted transaction {transaction_id} for user {user_id}")
+
+        # Insert risk score for same user
+        risk_id = risk_id_counter
+        risk_id_counter += 1
+        risk_score = round(random.uniform(0, 1), 4)
+
+        cursor.execute(
+            """
+            INSERT INTO user_risks (risk_id, user_id, risk_score, timestamp)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (risk_id, user_id, risk_score, timestamp)
+        )
+        print(f"Inserted risk {risk_id} for user {user_id} with score {risk_score}")
+
+        conn.commit()
+        time.sleep(1)
 
 except KeyboardInterrupt:
     print("Data generation stopped.")
