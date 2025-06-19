@@ -40,15 +40,14 @@ try:
         # 20% chance to create a new user
         if random.random() < 0.2:
             signup_date = random_date(datetime(2022, 1, 1), datetime.now())
-            email = f"user{user_id_counter}@example.com"
             country = random.choice(countries)
 
             cursor.execute(
                 """
-                INSERT INTO users (user_id, full_name, signup_date, email, country)
+                INSERT INTO users (user_id, full_name, signup_date, country)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (user_id_counter, f"user{user_id_counter}", signup_date, email, age, country)
+                (user_id_counter, f"user{user_id_counter}", signup_date, country)
             )
             user_ids.append(user_id_counter)
             print(f"Inserted user {user_id_counter}")
