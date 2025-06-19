@@ -45,7 +45,7 @@ try:
             cursor.execute(
                 """
                 INSERT INTO users (user_id, full_name, signup_date, country)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s)
                 """,
                 (user_id_counter, f"user{user_id_counter}", signup_date, country)
             )
