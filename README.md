@@ -126,7 +126,7 @@ CREATE TABLE user_risks (
 ```
 
 4. **Run the data generator:**
-   - Navigate to the `fraud-detection/src/` directory and run:
+   - Run the script:
      ```bash
      python data-generator.py
      ```
