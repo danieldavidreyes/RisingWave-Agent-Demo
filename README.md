@@ -82,7 +82,7 @@ python risingwave-agent.py
 - `client.py`: Client implementation for MCP communication
 
 ## Data Generator
-A sample data generator script is provided at `fraud-detection/src/data-generator.py`. This script continuously generates synthetic user, transaction, and risk score data and inserts it into a RisingWave-compatible PostgreSQL database. It is useful for simulating a real-time data stream for testing and demo purposes.
+A sample data generator script is provided at `data-generator.py`. This script continuously generates synthetic user, transaction, and risk score data and inserts it into a RisingWave-compatible PostgreSQL database. It is useful for simulating a real-time data stream for testing and demo purposes.
 
 ### How to Use the Data Generator
 1. **Install dependencies:**
