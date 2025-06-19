@@ -3,66 +3,6 @@
 ## Overview
 This project demonstrates the use of a RisingWave agent for interacting with a RisingWave streaming database. It includes tools for running queries, generating data, and more.
 
-## Data Generator
-A sample data generator script is provided at `fraud-detection/src/data-generator.py`. This script continuously generates synthetic user, transaction, and risk score data and inserts it into a RisingWave-compatible PostgreSQL database. It is useful for simulating a real-time data stream for testing and demo purposes.
-
-### How to Use the Data Generator
-1. **Install dependencies:**
-   - Make sure you have `psycopg2` installed: `pip install psycopg2`
-2. **Set up your RisingWave/PostgreSQL instance:**
-   - The script connects to the database using the following default parameters:
-     - dbname: `dev`
-     - user: `root`
-     - password: (empty)
-     - host: `localhost`
-     - port: `4566`
-   - You can modify these in the script if needed.
-3. **Create the required tables:**
-   - Before running the data generator, create the following tables in your database:
-
-```sql
-CREATE TABLE users (
-  user_id INT PRIMARY KEY,
-  full_name TEXT,
-  signup_date TIMESTAMP,
-  country TEXT
-);
-
-CREATE TABLE transactions (
-  transaction_id BIGINT PRIMARY KEY,
-  user_id INT,
-  amount FLOAT,
-  transaction_type TEXT,
-  merchant_name TEXT,
-  device_type TEXT,
-  location TEXT,
-  timestamp TIMESTAMP
-);
-
-CREATE TABLE user_risks (
-  risk_id BIGINT PRIMARY KEY,
-  user_id INT,
-  risk_score FLOAT,
-  timestamp TIMESTAMP
-);
-```
-
-4. **Run the data generator:**
-   - Navigate to the `fraud-detection/src/` directory and run:
-     ```bash
-     python data-generator.py
-     ```
-   - The script will continuously insert new users, transactions, and risk scores into the database.
-
-5. **Stop the generator:**
-   - Press `Ctrl+C` to stop the script. It will close the database connection gracefully.
-
-## RisingWave Agent
-(Describe how to use the agent here...)
-
----
-For more information, see the RisingWave documentation at [https://risingwave.dev](https://risingwave.dev)
-
 ## Prerequisites
 
 - Python 3.8 or higher
@@ -79,7 +19,7 @@ cd risingwave-agent-demo
 
 2. Clone the RisingWave MCP server:
 ```bash
-cd RisingWave-Agent-Demo && git clone https://github.com/risingwavelabs/risingwave-mcp.git
+git clone https://github.com/risingwavelabs/risingwave-mcp.git
 ```
 
 3. Install dependencies:
@@ -138,9 +78,64 @@ python risingwave-agent.py
 ## Project Structure
 
 - `agents/`: Agent implementation with Claude API integration
-- `server/`: RisingWave MCP server implementation (cloned from risingwave-mcp)
 - `risingwave-agent.py`: Main entry point for the agent
 - `client.py`: Client implementation for MCP communication
+
+## Data Generator
+A sample data generator script is provided at `fraud-detection/src/data-generator.py`. This script continuously generates synthetic user, transaction, and risk score data and inserts it into a RisingWave-compatible PostgreSQL database. It is useful for simulating a real-time data stream for testing and demo purposes.
+
+### How to Use the Data Generator
+1. **Install dependencies:**
+   - Make sure you have `psycopg2` installed: `pip install psycopg2`
+2. **Set up your RisingWave/PostgreSQL instance:**
+   - The script connects to the database using the following default parameters:
+     - dbname: `dev`
+     - user: `root`
+     - password: (empty)
+     - host: `localhost`
+     - port: `4566`
+   - You can modify these in the script if needed.
+3. **Create the required tables:**
+   - Before running the data generator, create the following tables in your database:
+
+```sql
+CREATE TABLE users (
+  user_id INT PRIMARY KEY,
+  full_name TEXT,
+  signup_date TIMESTAMP,
+  country TEXT
+);
+
+CREATE TABLE transactions (
+  transaction_id BIGINT PRIMARY KEY,
+  user_id INT,
+  amount FLOAT,
+  transaction_type TEXT,
+  merchant_name TEXT,
+  device_type TEXT,
+  location TEXT,
+  timestamp TIMESTAMP
+);
+
+CREATE TABLE user_risks (
+  risk_id BIGINT PRIMARY KEY,
+  user_id INT,
+  risk_score FLOAT,
+  timestamp TIMESTAMP
+);
+```
+
+4. **Run the data generator:**
+   - Navigate to the `fraud-detection/src/` directory and run:
+     ```bash
+     python data-generator.py
+     ```
+   - The script will continuously insert new users, transactions, and risk scores into the database.
+
+5. **Stop the generator:**
+   - Press `Ctrl+C` to stop the script. It will close the database connection gracefully.
+
+For more information, see the RisingWave documentation at [https://risingwave.dev](https://risingwave.dev)
 
 ## Troubleshooting
 
