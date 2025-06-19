@@ -25,8 +25,6 @@ CREATE TABLE users (
   user_id INT PRIMARY KEY,
   full_name TEXT,
   signup_date TIMESTAMP,
-  email TEXT,
-  age INT,
   country TEXT
 );
 
