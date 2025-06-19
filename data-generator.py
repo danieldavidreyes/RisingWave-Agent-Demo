@@ -41,12 +41,11 @@ try:
         if random.random() < 0.2:
             signup_date = random_date(datetime(2022, 1, 1), datetime.now())
             email = f"user{user_id_counter}@example.com"
-            age = random.randint(18, 65)
             country = random.choice(countries)
 
             cursor.execute(
                 """
-                INSERT INTO users (user_id, full_name, signup_date, email, age, country)
+                INSERT INTO users (user_id, full_name, signup_date, email, country)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 (user_id_counter, f"user{user_id_counter}", signup_date, email, age, country)
